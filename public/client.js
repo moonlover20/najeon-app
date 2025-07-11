@@ -138,10 +138,11 @@ function renderLeft() {
   playerListDiv.innerHTML = playerList.map(p => {
     let classes = 'player-list-item';
     if (pickedPlayers.includes(p.name)) classes += ' picked-player';
-    else if (failedPlayers.includes(p.name)) classes += ' failed-player';  // 여기서 반드시 붙어야 함
+    else if (failedPlayers.includes(p.name)) classes += ' failed-player';
     return `<div class="${classes}">${p.name} / ${p.tier} / ${p.pos}</div>`;
   }).join('');
 }
+
 
 
 
@@ -221,20 +222,20 @@ document.getElementById('topTeamName').textContent = myTeam;
 
 
 
-// 중앙 하단: 이번 경매 입찰 이력
+// 클라이언트 renderHistory 함수 예시
 function renderHistory() {
   const tbody = document.getElementById('historyTable');
+  // 종료 시 fullHistory, 진행 중엔 history 렌더링
   const history = auctionState.isRunning ? auctionState.history : auctionState.fullHistory;
-  
+
   if (history && history.length > 0) {
     tbody.innerHTML = history.slice().reverse().map(row =>
-      `<tr><td>${row.team}</td><td>${auctionState.currentPlayer || '-'}</td><td>${row.bid}</td></tr>`
+      `<tr><td>${row.team}</td><td>${row.player || '-'}</td><td>${row.bid}</td></tr>`
     ).join('');
   } else {
     tbody.innerHTML = '<tr><td colspan="3">-</td></tr>';
   }
 }
-
 
 
 // 경매 시작 (관리자만)
@@ -275,7 +276,6 @@ window.confirmAuction = () => {
 
 // 서버에서 유찰 처리 시 전체 클라이언트에 알림 및 실패 플레이어 리스트 업데이트
 socket.on('updateFailedPlayers', (failedList) => {
-  console.log('updateFailedPlayers 수신:', failedList);
   failedPlayers = failedList;
   renderLeft();
 });
@@ -290,8 +290,39 @@ socket.on('bidResult', ({ success, message }) => {
   showBidAlert(message, success);
 });
 
-
 document.addEventListener('DOMContentLoaded', () => {
+  // 경매확정 버튼 엘리먼트
+  const confirmButton = document.getElementById('confirmAuctionBtn'); // 버튼 id 맞춰주세요
+  if (confirmButton) {
+    // 버튼 활성화 조건 업데이트 (타이머 0 이거나 isRunning일 때 활성화)
+    function updateConfirmButton() {
+      const canConfirm = auctionState.isRunning || (!auctionState.isRunning && auctionState.timer === 0);
+      confirmButton.disabled = !canConfirm;
+    }
+
+    // 상태 변경 시마다 호출해야 함
+    socket.on('auctionStarted', (state) => {
+      auctionState = state;
+      updateConfirmButton();
+    });
+    socket.on('auctionEnded', (state) => {
+      auctionState = state;
+      updateConfirmButton();
+    });
+    socket.on('timer', (timer) => {
+      auctionState.timer = timer;
+      updateConfirmButton();
+    });
+  }
+socket.on('auctionEnded', (state) => {
+  auctionState = state;
+  renderCenter();
+  renderHistory();
+  if (!auctionState.currentTeam) { // 입찰팀 없으면 유찰임
+    alert('유찰되었습니다!');
+  }
+});
+  // 기존 입찰 입력 엔터 이벤트도 유지
   const bidInput = document.getElementById('bidInput');
   if (bidInput) {
     bidInput.addEventListener('keydown', function(e) {
@@ -301,4 +332,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
 

@@ -366,11 +366,11 @@
 </head>
 <body>
   <div class="main-container">
-    <!-- 좌측: 전체 플레이어 -->
-    <div class="side-box">
-      <div class="section-title">전체 플레이어</div>
-      <div class="player-list" id="playerList"></div>
-    </div>
+  <!-- 왼쪽: 잔여 포인트 -->
+  <div class="side-box">
+    <div class="section-title">잔여 포인트</div>
+    <div class="team-point-list" id="pointList"></div>
+  </div>
     <!-- 중앙: 경매 정보/입찰 -->
 
 <div id="bidAlert" style="
@@ -424,7 +424,7 @@
 
       <div class="admin-row">
         <button class="admin-only" onclick="startAuction()">경매시작</button>
-        <button class="admin-only" onclick="confirmAuction()">경매확정</button>
+
       </div>
       <div id="auctionStatusMsg" class="status-msg"></div>
       <div class="section-title" style="margin-top:14px;">입찰 이력</div>
@@ -435,12 +435,13 @@
         <tbody id="historyTable"></tbody>
       </table>
     </div>
-    <!-- 우측: 팀별 잔여 포인트 -->
-    <div class="side-box">
-      <div class="section-title">잔여 포인트</div>
-      <div class="team-point-list" id="pointList"></div>
-    </div>
+
+  <!-- 오른쪽: 전체 플레이어 -->
+  <div class="side-box">
+    <div class="section-title">전체 플레이어</div>
+    <div class="player-list" id="playerList"></div>
   </div>
+</div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
 </body>

@@ -121,34 +121,57 @@ socket.on('setTeamPoints', ({ team, point }) => {
   });
 
   // 경매 시작 (관리자만)
+// startAuction 이벤트
 socket.on('startAuction', (playerName) => {
   if (auctionState.isRunning) return;
-
   if (!playerName) {
     socket.emit('error', '경매 시작할 선수가 지정되어 있지 않습니다.');
     return;
   }
   auctionState.currentPlayer = playerName;
-    auctionState.currentBid = 0;
-    auctionState.currentTeam = null;
-    auctionState.timer = 30;
-    auctionState.isRunning = true;
-    auctionState.history = [];
-    io.emit('auctionStarted', { ...auctionState });
+  auctionState.currentBid = 0;
+  auctionState.currentTeam = null;
+  auctionState.timer = 20;
+  auctionState.isRunning = true;
+  auctionState.history = [];
+  io.emit('auctionStarted', { ...auctionState });
+
   if (auctionInterval) clearInterval(auctionInterval);
 
-  // 타이머 시작
   auctionInterval = setInterval(() => {
     auctionState.timer--;
     io.emit('timer', auctionState.timer);
-    if (auctionState.timer <= 0 || !auctionState.isRunning) {
-      clearInterval(auctionInterval);
-      auctionState.isRunning = false;
-      io.emit('auctionEnded', { ...auctionState });
+
+if (auctionState.timer <= 0 || !auctionState.isRunning) {
+  clearInterval(auctionInterval);
+  auctionState.isRunning = false;
+
+  if (auctionState.currentBid > 0 && auctionState.currentTeam) {
+    // 자동 낙찰 처리
+    teamPoints[auctionState.currentTeam] -= auctionState.currentBid;
+    auctionState.fullHistory.push({
+      team: auctionState.currentTeam,
+      player: auctionState.currentPlayer,
+      bid: auctionState.currentBid,
+    });
+    io.emit('updatePoints', teamPoints);
+  } else {
+    // 자동 유찰 처리
+    pickedPlayers = pickedPlayers.filter(n => n !== auctionState.currentPlayer);  // 뽑힘 목록에서 제거
+    if (!failedPlayers.includes(auctionState.currentPlayer)) {
+      failedPlayers.push(auctionState.currentPlayer);
     }
+    io.emit('updatePlayers', { pickedPlayers, failedPlayers });
+  }
+
+  io.emit('auctionEnded', { ...auctionState, history: auctionState.fullHistory });
+  io.emit('updateHistory', auctionState.fullHistory);
+}
+
   }, 1000);
 });
 
+// bid 이벤트
 socket.on('bid', ({ team, bid }) => {
   if (!auctionState.isRunning) {
     socket.emit('bidResult', { success: false, message: '경매가 시작되지 않았습니다.' });
@@ -163,20 +186,11 @@ socket.on('bid', ({ team, bid }) => {
     auctionState.currentTeam = team;
     auctionState.history.push({ team, bid });
 
-    // ★ 타이머 20초로 초기화 + 재시작
+    // 타이머를 초기화만 함(20초로)
     auctionState.timer = 20;
     io.emit('timer', auctionState.timer);
 
-    if (auctionInterval) clearInterval(auctionInterval);
-    auctionInterval = setInterval(() => {
-      auctionState.timer--;
-      io.emit('timer', auctionState.timer);
-      if (auctionState.timer <= 0 || !auctionState.isRunning) {
-        clearInterval(auctionInterval);
-        auctionState.isRunning = false;
-        io.emit('auctionEnded', { ...auctionState });
-      }
-    }, 1000);
+    // **여기서 setInterval 다시 생성하지 말 것**
 
     io.emit('newBid', { team, bid, history: auctionState.history });
     socket.emit('bidResult', { success: true, message: '입찰에 성공했습니다!' });
@@ -184,6 +198,7 @@ socket.on('bid', ({ team, bid }) => {
     socket.emit('bidResult', { success: false, message: '입찰가가 현재 입찰가보다 낮거나 잔여 포인트가 부족합니다.' });
   }
 });
+
 
 
   // 낙찰 (관리자만)
