@@ -373,15 +373,29 @@
     </div>
     <!-- 중앙: 경매 정보/입찰 -->
 
+<div id="bidAlert" style="
+  position: fixed; 
+  top: 80px; 
+  left: 50%; 
+  transform: translateX(-50%);
+  background: #4caf50; 
+  color: white; 
+  padding: 10px 20px; 
+  border-radius: 8px; 
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2); 
+  font-weight: 700; 
+  font-family: 'GmarketSansBold', sans-serif; 
+  display: none; 
+  z-index: 1000;">
+  <span id="bidAlertText"></span>
+</div>
 
     <div class="center-box">
 <div class="top-admin-btns admin-only">
 <button id="normalPickBtn" class="admin-pick-btn normal-pick-btn">
   <span class="emoji"></span> 일반 뽑기
 </button>
-<button id="failPickBtn" class="admin-pick-btn fail-pick-btn">
-  <span class="emoji"></span> 유찰 인원 재추첨
-</button>
+
 
 </div>
 <div id="topTeamName" class="top-team-name"></div>
@@ -411,7 +425,6 @@
       <div class="admin-row">
         <button class="admin-only" onclick="startAuction()">경매시작</button>
         <button class="admin-only" onclick="confirmAuction()">경매확정</button>
-        <button class="admin-only" onclick="cancelAuction()">유찰처리</button>
       </div>
       <div id="auctionStatusMsg" class="status-msg"></div>
       <div class="section-title" style="margin-top:14px;">입찰 이력</div>

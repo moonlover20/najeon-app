@@ -1,4 +1,4 @@
-const allowedTeams = ['각반', '대림', '말대모', '러부엉', '양갱', '블페러', '관전자'];
+const allowedTeams = ['각반', '대림', '말대모', '러부엉', '양갱', '블페러', '관전자','admin'];
 
 
 function getTeamFromUrl() {
@@ -102,6 +102,7 @@ socket.on('newBid', ({team, bid, history}) => {
   renderCenter();
   renderHistory();
 });
+
 socket.on('auctionEnded', (state) => {
   auctionState = state;
   renderCenter();
@@ -178,6 +179,18 @@ function startRouletteAnimation(finalPlayerName) {
   }, spinDuration);
 }
 
+function showBidAlert(message, success = true) {
+  const alertDiv = document.getElementById('bidAlert');
+  const alertText = document.getElementById('bidAlertText');
+
+  alertText.textContent = message;
+  alertDiv.style.background = success ? '#4caf50' : '#f44336'; // 초록 or 빨강
+  alertDiv.style.display = 'block';
+
+  setTimeout(() => {
+    alertDiv.style.display = 'none';
+  }, 2500); // 2.5초 후 자동 사라짐
+}
 
 function renderRight() {
   const pointListDiv = document.getElementById('pointList');
@@ -211,14 +224,17 @@ document.getElementById('topTeamName').textContent = myTeam;
 // 중앙 하단: 이번 경매 입찰 이력
 function renderHistory() {
   const tbody = document.getElementById('historyTable');
-  if (auctionState.fullHistory && auctionState.fullHistory.length > 0) {
-    tbody.innerHTML = auctionState.fullHistory.map(row =>
-      `<tr><td>${row.team}</td><td>${row.player}</td><td>${row.bid}</td></tr>`
+  const history = auctionState.isRunning ? auctionState.history : auctionState.fullHistory;
+  
+  if (history && history.length > 0) {
+    tbody.innerHTML = history.slice().reverse().map(row =>
+      `<tr><td>${row.team}</td><td>${auctionState.currentPlayer || '-'}</td><td>${row.bid}</td></tr>`
     ).join('');
   } else {
     tbody.innerHTML = '<tr><td colspan="3">-</td></tr>';
   }
 }
+
 
 
 // 경매 시작 (관리자만)
@@ -255,19 +271,6 @@ window.confirmAuction = () => {
   if (myTeam !== '관전자') return;
   socket.emit('confirmAuction');
 };
-// 유찰
-window.cancelAuction = () => {
-  if (myTeam !== '관전자') return;
-  console.log('유찰 시 현재 선수:', auctionState.currentPlayer);  // 로그 추가
-  if (!auctionState.currentPlayer) {
-    alert('현재 경매중인 선수가 없습니다.');
-    return;
-  }
-  if (!failedPlayers.includes(auctionState.currentPlayer)) {
-    failedPlayers.push(auctionState.currentPlayer);
-  }
-  socket.emit('cancelAuction', { failedPlayers }); // 서버로 유찰된 선수 리스트 보냄
-};
 
 
 // 서버에서 유찰 처리 시 전체 클라이언트에 알림 및 실패 플레이어 리스트 업데이트
@@ -276,3 +279,26 @@ socket.on('updateFailedPlayers', (failedList) => {
   failedPlayers = failedList;
   renderLeft();
 });
+
+// 서버에서 플레이어 상태가 바뀌었을 때 실시간 반영
+socket.on('updatePlayers', ({ pickedPlayers: picked, failedPlayers: failed }) => {
+  pickedPlayers = picked;
+  failedPlayers = failed;
+  renderLeft();  // ← 플레이어 색상 실시간 갱신!
+});
+socket.on('bidResult', ({ success, message }) => {
+  showBidAlert(message, success);
+});
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const bidInput = document.getElementById('bidInput');
+  if (bidInput) {
+    bidInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        window.bid();
+      }
+    });
+  }
+});
+

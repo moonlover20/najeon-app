@@ -9,6 +9,7 @@ const io = new Server(server);
 
 // 더미 데이터: 실제로는 DB나 시트에서 불러오면 됨
 const teamNames = ['각반', '대림', '말대모', '러부엉', '양갱', '블페러'];
+let auctionInterval = null;
 let teamPoints = { 각반: 850, 대림: 900, 말대모: 900, 러부엉: 950, 양갱: 1000, 블페러: 1000 };
 let pickedPlayers = [];
 let failedPlayers = [];
@@ -63,7 +64,26 @@ io.on('connection', (socket) => {
     pickedPlayers,
     failedPlayers,
   });
+  socket.on('setPlayerStatus', ({ name, status }) => {
+    // 1. 이름이 있으면 picked, failed 모두에서 제거
+    pickedPlayers = pickedPlayers.filter(n => n !== name);
+    failedPlayers = failedPlayers.filter(n => n !== name);
 
+    // 2. 상태에 따라 배열에 넣기
+    if (status === 'picked') pickedPlayers.push(name);
+    else if (status === 'failed') failedPlayers.push(name);
+    // (status가 'default'면 어디에도 안넣음 = 검은색)
+
+    // 모든 클라이언트에게 최신 상태 전송
+    io.emit('updatePlayers', { pickedPlayers, failedPlayers });
+  });
+
+socket.on('setTeamPoints', ({ team, point }) => {
+  if (!teamNames.includes(team)) return;
+  if (typeof point !== "number" || point < 0) return;
+  teamPoints[team] = point;
+  io.emit('updatePoints', teamPoints);
+});
   // 새 유저에게 전체 실시간 상태 전송
   socket.on('getState', () => {
     socket.emit('init', {
@@ -102,7 +122,6 @@ io.on('connection', (socket) => {
 
   // 경매 시작 (관리자만)
 socket.on('startAuction', (playerName) => {
-  console.log('경매 시작 요청 선수:', playerName);  // 로그 추가
   if (auctionState.isRunning) return;
 
   if (!playerName) {
@@ -116,30 +135,56 @@ socket.on('startAuction', (playerName) => {
     auctionState.isRunning = true;
     auctionState.history = [];
     io.emit('auctionStarted', { ...auctionState });
+  if (auctionInterval) clearInterval(auctionInterval);
 
-    // 타이머 시작
-    let interval = setInterval(() => {
+  // 타이머 시작
+  auctionInterval = setInterval(() => {
+    auctionState.timer--;
+    io.emit('timer', auctionState.timer);
+    if (auctionState.timer <= 0 || !auctionState.isRunning) {
+      clearInterval(auctionInterval);
+      auctionState.isRunning = false;
+      io.emit('auctionEnded', { ...auctionState });
+    }
+  }, 1000);
+});
+
+socket.on('bid', ({ team, bid }) => {
+  if (!auctionState.isRunning) {
+    socket.emit('bidResult', { success: false, message: '경매가 시작되지 않았습니다.' });
+    return;
+  }
+  if (!teamNames.includes(team)) {
+    socket.emit('bidResult', { success: false, message: '유효하지 않은 팀입니다.' });
+    return;
+  }
+  if (bid > auctionState.currentBid && bid <= teamPoints[team]) {
+    auctionState.currentBid = bid;
+    auctionState.currentTeam = team;
+    auctionState.history.push({ team, bid });
+
+    // ★ 타이머 20초로 초기화 + 재시작
+    auctionState.timer = 20;
+    io.emit('timer', auctionState.timer);
+
+    if (auctionInterval) clearInterval(auctionInterval);
+    auctionInterval = setInterval(() => {
       auctionState.timer--;
       io.emit('timer', auctionState.timer);
       if (auctionState.timer <= 0 || !auctionState.isRunning) {
-        clearInterval(interval);
+        clearInterval(auctionInterval);
         auctionState.isRunning = false;
         io.emit('auctionEnded', { ...auctionState });
       }
     }, 1000);
-  });
 
-  // 입찰 (팀장만)
-  socket.on('bid', ({ team, bid }) => {
-    if (!auctionState.isRunning) return;
-    if (!teamNames.includes(team)) return;
-    if (bid > auctionState.currentBid && bid <= teamPoints[team]) {
-      auctionState.currentBid = bid;
-      auctionState.currentTeam = team;
-      auctionState.history.push({ team, bid });
-      io.emit('newBid', { team, bid, history: auctionState.history });
-    }
-  });
+    io.emit('newBid', { team, bid, history: auctionState.history });
+    socket.emit('bidResult', { success: true, message: '입찰에 성공했습니다!' });
+  } else {
+    socket.emit('bidResult', { success: false, message: '입찰가가 현재 입찰가보다 낮거나 잔여 포인트가 부족합니다.' });
+  }
+});
+
 
   // 낙찰 (관리자만)
   socket.on('confirmAuction', () => {
@@ -159,25 +204,7 @@ socket.on('startAuction', (playerName) => {
     io.emit('updateHistory', auctionState.fullHistory);
   });
 
-  // 유찰 (관리자만)
-socket.on('cancelAuction', ({ failedPlayers: clientFailedPlayers }) => {
-  if (auctionState.currentPlayer && !failedPlayers.includes(auctionState.currentPlayer)) {
-    failedPlayers.push(auctionState.currentPlayer);
-  }
 
-  auctionState.isRunning = false;
-  auctionState.timer = 30;
-  auctionState.currentPlayer = null;
-  auctionState.currentBid = 0;
-  auctionState.currentTeam = null;
-  auctionState.history = [];
-  auctionState.fullHistory = [];
-
-  io.emit('auctionCanceled', auctionState);
-  io.emit('updateFailedPlayers', failedPlayers);
-
-  console.log("서버 failedPlayers 배열 상태:", failedPlayers);
-});
 
 
 });
