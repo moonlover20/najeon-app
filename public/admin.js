@@ -6,6 +6,7 @@ let failedPlayers = [];
 let teamNames = [];
 let teamPoints = {};
 let fullHistory = [];
+let teamRoster = {};  
 
 socket.on('init', (data) => {
   playerList = data.playerList;
@@ -88,6 +89,35 @@ function renderPlayers() {
       </tr>`;
   }).join('');
 }
+// 팀별 선수 표 렌더 (admin페이지에 별도 표 or rosterTable에)
+function renderTeamRoster() {
+  const tbl = document.getElementById('adminRosterTableBody');
+  if (!tbl) return;
+  tbl.innerHTML = teamNames.map(team => {
+    const names = (teamRoster[team] || []).map(nick =>
+      `<td>${nick} <button onclick="removeFromTeam('${team}','${nick}')" class="btn black" style="font-size:0.9em;">❌</button></td>`
+    ).join('');
+    return `<tr>
+      <td>${team}</td>
+      ${names}
+    </tr>`;
+  }).join('');
+}
+
+// 삭제 버튼 클릭 핸들러
+window.removeFromTeam = (team, name) => {
+  if (confirm(`${team}팀에서 ${name}을/를 삭제하시겠습니까?`)) {
+    socket.emit('removePlayerFromTeam', { team, name });
+  }
+};
+
+// 소켓에서 팀 데이터 수신시 렌더
+socket.on('updateRoster', (roster) => {
+  teamRoster = roster;
+  renderTeamRoster();
+});
+
+
 
 // 팀 포인트 렌더
 function renderPoints() {

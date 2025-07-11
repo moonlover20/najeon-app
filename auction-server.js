@@ -220,6 +220,12 @@ socket.on('bid', ({ team, bid }) => {
     socket.emit('bidResult', { success: false, message: '입찰가가 현재 입찰가보다 낮거나 잔여 포인트가 부족합니다.' });
   }
 });
+// 팀별 선수 제거 (관리자)
+socket.on('removePlayerFromTeam', ({ team, name }) => {
+  if (!teamRoster[team]) return;
+  teamRoster[team] = teamRoster[team].filter(nick => nick !== name);
+  io.emit('updateRoster', teamRoster);
+});
 
 
 
