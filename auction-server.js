@@ -8,15 +8,15 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // 더미 데이터: 실제로는 DB나 시트에서 불러오면 됨
-const teamNames = ['각반', '대림', '말대모', '러부엉', '양갱', '블페러'];
+const teamNames = ['각반', '대림', '장수풍뎅이', '러부엉', '양갱', '블페러'];
 let auctionInterval = null;
-let teamPoints = { 각반: 850, 대림: 900, 말대모: 900, 러부엉: 950, 양갱: 1000, 블페러: 1000 };
+let teamPoints = { 각반: 850, 대림: 900, 장수풍뎅이: 900, 러부엉: 950, 양갱: 1000, 블페러: 1000 };
 let pickedPlayers = [];
 let failedPlayers = [];
 let playerList = [
   { name: '견습생', tier: 'M', pos: '정글' },
   { name: '케터', tier: 'M', pos: '미드' },
-  { name: '장수풍뎅이', tier: 'M', pos: '정글' },
+  { name: '말대모', tier: 'M', pos: '미드' },
   { name: '르블이', tier: 'M', pos: '미드' },
   { name: '라포', tier: 'M', pos: '탑' },
   { name: '케케로', tier: 'D', pos: '탑' },
@@ -42,7 +42,7 @@ let playerList = [
 let teamRoster = {
   각반: [],
   대림: [],
-  말대모: [],
+  장수풍뎅이: [],
   러부엉: [],
   양갱: [],
   블페러: [],

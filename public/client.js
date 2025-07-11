@@ -1,4 +1,4 @@
-const allowedTeams = ['각반', '대림', '말대모', '러부엉', '양갱', '블페러', '관전자','admin'];
+const allowedTeams = ['각반', '대림', '장수풍뎅이', '러부엉', '양갱', '블페러', '관전자','admin'];
 
 
 function getTeamFromUrl() {
