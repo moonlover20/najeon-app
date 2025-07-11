@@ -213,15 +213,9 @@ function showBidAlert(message, success = true) {
 }
 
 function renderRight() {
-  const pointListDiv = document.getElementById('pointList');
-pointListDiv.innerHTML = teamNames.map(name =>
-  `<div class="team-point-row">
-    <span class="team-point-name">${name}</span>
-    <span class="team-point-value">${teamPoints[name]}P</span>
-  </div>`
-).join('');
-
+  // 사용 안 함
 }
+
 
 
 function renderCenter() {
