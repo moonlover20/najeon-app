@@ -39,6 +39,14 @@ let playerList = [
   { name: '광천김', tier: 'B', pos: '탑' },
   { name: '도민', tier: 'I', pos: '서폿' },
 ];
+let teamRoster = {
+  각반: [],
+  대림: [],
+  말대모: [],
+  러부엉: [],
+  양갱: [],
+  블페러: [],
+};
 
 let auctionState = {
   currentPlayer: null,      // 뽑힌 플레이어 닉네임
@@ -77,7 +85,12 @@ io.on('connection', (socket) => {
     // 모든 클라이언트에게 최신 상태 전송
     io.emit('updatePlayers', { pickedPlayers, failedPlayers });
   });
-
+  socket.on('clearHistory', () => {
+    // 관리자 인증 있으면 여기서 확인 가능
+    auctionState.fullHistory = [];
+    auctionState.history = [];
+    io.emit('updateHistory', auctionState.fullHistory);
+  });
 socket.on('setTeamPoints', ({ team, point }) => {
   if (!teamNames.includes(team)) return;
   if (typeof point !== "number" || point < 0) return;
@@ -149,12 +162,21 @@ if (auctionState.timer <= 0 || !auctionState.isRunning) {
   if (auctionState.currentBid > 0 && auctionState.currentTeam) {
     // 자동 낙찰 처리
     teamPoints[auctionState.currentTeam] -= auctionState.currentBid;
+    
+    // 👇 [추가!] 팀원 목록에 자동 추가 (최대 4명까지)
+    if (!teamRoster[auctionState.currentTeam].includes(auctionState.currentPlayer) && teamRoster[auctionState.currentTeam].length < 4) {
+      teamRoster[auctionState.currentTeam].push(auctionState.currentPlayer);
+    }
+    // 👆
+
     auctionState.fullHistory.push({
       team: auctionState.currentTeam,
       player: auctionState.currentPlayer,
       bid: auctionState.currentBid,
     });
+
     io.emit('updatePoints', teamPoints);
+    io.emit('updateRoster', teamRoster); // 👈 [추가] 표 갱신용
   } else {
     // 자동 유찰 처리
     pickedPlayers = pickedPlayers.filter(n => n !== auctionState.currentPlayer);  // 뽑힘 목록에서 제거
@@ -202,23 +224,38 @@ socket.on('bid', ({ team, bid }) => {
 
 
   // 낙찰 (관리자만)
-  socket.on('confirmAuction', () => {
-    if (!auctionState.isRunning) return;
-    if (auctionState.currentTeam && auctionState.currentBid > 0) {
-      // 팀 포인트 차감
-      teamPoints[auctionState.currentTeam] -= auctionState.currentBid;
-      auctionState.fullHistory.push({
-        team: auctionState.currentTeam,
-        player: auctionState.currentPlayer,
-        bid: auctionState.currentBid
-      });
+socket.on('confirmAuction', () => {
+  if (!auctionState.isRunning) return;
+  if (auctionState.currentTeam && auctionState.currentBid > 0) {
+    // 팀 포인트 차감
+    teamPoints[auctionState.currentTeam] -= auctionState.currentBid;
+    // [추가!] 닉네임 팀 목록에 추가
+    if (!teamRoster[auctionState.currentTeam].includes(auctionState.currentPlayer)) {
+      teamRoster[auctionState.currentTeam].push(auctionState.currentPlayer);
     }
-    auctionState.isRunning = false;
-    io.emit('auctionEnded', { ...auctionState });
-    io.emit('updatePoints', teamPoints);
-    io.emit('updateHistory', auctionState.fullHistory);
-  });
+    auctionState.fullHistory.push({
+      team: auctionState.currentTeam,
+      player: auctionState.currentPlayer,
+      bid: auctionState.currentBid
+    });
+  }
+  auctionState.isRunning = false;
+  io.emit('auctionEnded', { ...auctionState });
+  io.emit('updatePoints', teamPoints);
+  io.emit('updateHistory', auctionState.fullHistory);
+  io.emit('updateRoster', teamRoster); // 추가! 클라이언트에 roster 보내기
+});
 
+// 서버가 초기화할 때도 함께 전송
+socket.emit('init', {
+  teamNames,
+  teamPoints,
+  playerList,
+  auctionState,
+  pickedPlayers,
+  failedPlayers,
+  teamRoster, // 추가!
+});
 
 
 

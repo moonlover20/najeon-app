@@ -5,6 +5,7 @@ let pickedPlayers = [];
 let failedPlayers = [];
 let teamNames = [];
 let teamPoints = {};
+let fullHistory = [];
 
 socket.on('init', (data) => {
   playerList = data.playerList;
@@ -14,6 +15,35 @@ socket.on('init', (data) => {
   teamPoints = data.teamPoints;
   renderPlayers();
   renderPoints();
+  renderHistory();
+});
+socket.on('updateHistory', (history) => {
+  fullHistory = history;
+  renderHistory();
+});
+
+
+
+function renderHistory() {
+  const tbody = document.getElementById('historyTableBody');
+  if (fullHistory.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3">입찰 이력이 없습니다.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = fullHistory.map(h =>
+    `<tr>
+      <td>${h.team}</td>
+      <td>${h.player}</td>
+      <td>${h.bid}</td>
+    </tr>`
+  ).join('');
+}
+
+// 초기화 버튼 이벤트
+document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+  if (confirm('입찰 이력을 정말 초기화하시겠습니까?')) {
+    socket.emit('clearHistory');
+  }
 });
 
 socket.emit('getState');

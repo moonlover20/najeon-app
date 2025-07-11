@@ -42,7 +42,7 @@ window.onload = function() {
 
 let pickedPlayers = [];
 let failedPlayers = [];
-
+let teamRoster = {};
 
 const socket = io();
 let teamNames = [];
@@ -57,12 +57,31 @@ socket.on('init', (data) => {
   playerList = data.playerList;
   auctionState = data.auctionState;
   pickedPlayers = data.pickedPlayers || []; 
+  renderRosterTable();
+  teamRoster = data.teamRoster || {};
  failedPlayers = data.failedPlayers || []; // 서버에서 받아서 저장
   renderAll();
 });
-
+socket.on('updateRoster', (roster) => {
+  teamRoster = roster;
+  renderRosterTable();
+});
 // 클라이언트 쪽 pickedPlayers 배열은 서버와 동기화용, 초기값 빈 배열
 
+function renderRosterTable() {
+  const tbl = document.getElementById('rosterTable');
+  if (!tbl) return;
+  tbl.innerHTML = teamNames.map(team => {
+    const names = (teamRoster[team] || []).map(nick => `<td>${nick}</td>`).join('');
+    const remain = `<td class="remain">${teamPoints[team] || 0}p</td>`;
+    return `<tr>
+      <td class="team-name">${team}</td>
+      ${names}
+      ${'<td></td>'.repeat(4 - (teamRoster[team]?.length || 0))} 
+      ${remain}
+    </tr>`;
+  }).join('');
+}
 
 socket.on('normalPickResult', ({ name, message }) => {
   if (message) {
@@ -225,17 +244,21 @@ document.getElementById('topTeamName').textContent = myTeam;
 // 클라이언트 renderHistory 함수 예시
 function renderHistory() {
   const tbody = document.getElementById('historyTable');
-  // 종료 시 fullHistory, 진행 중엔 history 렌더링
   const history = auctionState.isRunning ? auctionState.history : auctionState.fullHistory;
 
   if (history && history.length > 0) {
     tbody.innerHTML = history.slice().reverse().map(row =>
-      `<tr><td>${row.team}</td><td>${row.player || '-'}</td><td>${row.bid}</td></tr>`
+      `<tr>
+        <td>${row.team}</td>
+        <td>${row.player || (auctionState.isRunning ? auctionState.currentPlayer : '-')}</td>
+        <td>${row.bid}</td>
+      </tr>`
     ).join('');
   } else {
     tbody.innerHTML = '<tr><td colspan="3">-</td></tr>';
   }
 }
+
 
 
 // 경매 시작 (관리자만)
