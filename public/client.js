@@ -1,0 +1,278 @@
+const allowedTeams = ['각반', '대림', '말대모', '러부엉', '양갱', '블페러', '관전자'];
+
+
+function getTeamFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const t = params.get('team');
+  return t ? t : '관전자';
+}
+const myTeam = getTeamFromUrl();
+
+
+if (!allowedTeams.includes(myTeam)) {
+  document.body.innerHTML = `
+    <div style="display:flex;justify-content:center;align-items:center;min-height:100vh;font-size:2rem;color:#f4511e;font-family:'GmarketSansBold',sans-serif;">
+      🚫 잘못된 팀명으로 접근하셨습니다.<br><br>
+      URL을 확인해주세요.
+    </div>
+  `;
+  throw new Error("Invalid team name");
+}
+
+// 권한별 버튼 표시
+window.onload = function() {
+  // 관전자가 아니면 관리자 버튼 숨김
+  if (myTeam !== '관전자') {
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+  }
+  // 관전자(관리자)는 팀장 입찰칸 숨김!
+  if (myTeam === '관전자') {
+    document.querySelectorAll('.team-only').forEach(el => el.style.display = 'none');
+
+    // ★ 뽑기 버튼 바인딩도 여기서!
+    const normalPickBtn = document.getElementById('normalPickBtn');
+    if (normalPickBtn) {
+      normalPickBtn.onclick = function() {
+        socket.emit('normalPick');
+      };
+    }
+  }
+};
+
+
+let pickedPlayers = [];
+let failedPlayers = [];
+
+
+const socket = io();
+let teamNames = [];
+let teamPoints = {};
+let playerList = [];
+let auctionState = {};
+
+// 최초 데이터 받기
+socket.on('init', (data) => {
+  teamNames = data.teamNames;
+  teamPoints = data.teamPoints;
+  playerList = data.playerList;
+  auctionState = data.auctionState;
+  pickedPlayers = data.pickedPlayers || []; 
+ failedPlayers = data.failedPlayers || []; // 서버에서 받아서 저장
+  renderAll();
+});
+
+// 클라이언트 쪽 pickedPlayers 배열은 서버와 동기화용, 초기값 빈 배열
+
+
+socket.on('normalPickResult', ({ name, message }) => {
+  if (message) {
+    alert(message);
+    return;
+  }
+  if (!name) return;
+  console.log('Picked player:', name); 
+  pickedPlayers.push(name);
+  auctionState.currentPlayer = name;   // ★ 여기 추가
+  startRouletteAnimation(name);
+  renderLeft();
+  renderCenter();  // 상태 갱신 위해 호출
+});
+
+
+// 새 유저 동기화
+socket.emit('getState');
+
+// 경매 시작
+socket.on('auctionStarted', (state) => {
+  console.log('auctionStarted 수신:', state.currentPlayer);  // 로그 추가
+  auctionState = state;
+  renderCenter();
+  renderHistory();
+});
+
+// 기존 타이머 코드
+socket.on('timer', (timer) => {
+  document.getElementById('auctionTimer').textContent = timer;
+});
+
+socket.on('newBid', ({team, bid, history}) => {
+  auctionState.currentBid = bid;
+  auctionState.currentTeam = team;
+  auctionState.history = history;
+  renderCenter();
+  renderHistory();
+});
+socket.on('auctionEnded', (state) => {
+  auctionState = state;
+  renderCenter();
+  renderHistory();
+});
+socket.on('auctionCanceled', (state) => {
+  auctionState = state;
+  renderCenter();
+  renderHistory();
+  if (myTeam === '관전자') {  // 관리자(관전자)에게만 알림 띄우기
+    alert('유찰되었습니다!');
+  }
+});
+
+socket.on('updatePoints', (points) => {
+  teamPoints = points;
+  renderRight();
+});
+socket.on('updateHistory', (fullHistory) => {
+  auctionState.fullHistory = fullHistory;
+  renderRight();
+});
+
+// 렌더링 함수들
+function renderAll() {
+  renderLeft();
+  renderCenter();
+  renderRight();
+  renderHistory();
+}
+function renderLeft() {
+  const playerListDiv = document.getElementById('playerList');
+  playerListDiv.innerHTML = playerList.map(p => {
+    let classes = 'player-list-item';
+    if (pickedPlayers.includes(p.name)) classes += ' picked-player';
+    else if (failedPlayers.includes(p.name)) classes += ' failed-player';  // 여기서 반드시 붙어야 함
+    return `<div class="${classes}">${p.name} / ${p.tier} / ${p.pos}</div>`;
+  }).join('');
+}
+
+
+
+let rouletteInterval = null;
+
+function startRouletteAnimation(finalPlayerName) {
+  const rouletteDiv = document.getElementById('rouletteDisplay');
+  if (!rouletteDiv) {
+    alert(`룰렛 애니메이션: ${finalPlayerName} 뽑힘!`);
+    return;
+  }
+
+  const candidates = playerList.filter(p => !pickedPlayers.includes(p.name)).map(p => p.name);
+  if (candidates.length === 0) {
+    rouletteDiv.textContent = "더 이상 뽑을 선수가 없습니다.";
+    return;
+  }
+
+  let index = 0;
+  const spinDuration = 3000; // 3초 동안 룰렛 돌림
+  const intervalTime = 100; // 0.1초마다 변경
+
+  rouletteDiv.textContent = candidates[index];
+  
+  rouletteInterval = setInterval(() => {
+    index = (index + 1) % candidates.length;
+    rouletteDiv.textContent = candidates[index];
+  }, intervalTime);
+
+  setTimeout(() => {
+    clearInterval(rouletteInterval);
+    rouletteDiv.textContent = finalPlayerName;
+    // 뽑힌 선수 주황색 표시를 위해 renderLeft 다시 호출
+    renderLeft();
+  }, spinDuration);
+}
+
+
+function renderRight() {
+  const pointListDiv = document.getElementById('pointList');
+pointListDiv.innerHTML = teamNames.map(name =>
+  `<div class="team-point-row">
+    <span class="team-point-name">${name}</span>
+    <span class="team-point-value">${teamPoints[name]}P</span>
+  </div>`
+).join('');
+
+}
+
+
+function renderCenter() {
+  // 입찰가
+  document.getElementById('currentBid').textContent = (auctionState.currentBid || 0) + " P";
+  // 입찰팀
+  document.getElementById('currentBidTeam').textContent = auctionState.currentTeam || '-';
+  // 현재 뽑힌 플레이어
+
+// 페이지 로드 시(또는 renderCenter에서) 팀명을 표시
+document.getElementById('topTeamName').textContent = myTeam;
+
+  let msg = '';
+  if (!auctionState.isRunning && auctionState.currentPlayer) msg = '⚠️ 입찰 종료!';
+  document.getElementById('auctionStatusMsg').textContent = msg;
+}
+
+
+
+// 중앙 하단: 이번 경매 입찰 이력
+function renderHistory() {
+  const tbody = document.getElementById('historyTable');
+  if (auctionState.fullHistory && auctionState.fullHistory.length > 0) {
+    tbody.innerHTML = auctionState.fullHistory.map(row =>
+      `<tr><td>${row.team}</td><td>${row.player}</td><td>${row.bid}</td></tr>`
+    ).join('');
+  } else {
+    tbody.innerHTML = '<tr><td colspan="3">-</td></tr>';
+  }
+}
+
+
+// 경매 시작 (관리자만)
+// 클라이언트 - 뽑힌 선수 이름은 rouletteAnimation 후, 예를 들어 pickedPlayers 배열의 마지막 선수로 가정
+window.startAuction = () => {
+  if (myTeam !== '관전자') return;
+  if (!auctionState.currentPlayer) {
+    alert('경매를 시작할 선수를 먼저 뽑아주세요.');
+    return;
+  }
+  if (confirm('경매를 시작하겠습니까?')) {
+    socket.emit('startAuction', auctionState.currentPlayer);
+  }
+};
+
+
+
+// 입찰
+window.bid = () => {
+  const team = myTeam; // 직접 입력받지 않고, 파라미터로 고정!
+  const bid = parseInt(document.getElementById('bidInput').value, 10);
+  if (!auctionState.isRunning) {
+    alert('경매가 시작되지 않았습니다.');
+    return;
+  }
+  if (!team || isNaN(bid) || bid < 1) return;
+  socket.emit('bid', {team, bid});
+  document.getElementById('bidInput').value = '';
+};
+
+
+// 낙찰
+window.confirmAuction = () => {
+  if (myTeam !== '관전자') return;
+  socket.emit('confirmAuction');
+};
+// 유찰
+window.cancelAuction = () => {
+  if (myTeam !== '관전자') return;
+  console.log('유찰 시 현재 선수:', auctionState.currentPlayer);  // 로그 추가
+  if (!auctionState.currentPlayer) {
+    alert('현재 경매중인 선수가 없습니다.');
+    return;
+  }
+  if (!failedPlayers.includes(auctionState.currentPlayer)) {
+    failedPlayers.push(auctionState.currentPlayer);
+  }
+  socket.emit('cancelAuction', { failedPlayers }); // 서버로 유찰된 선수 리스트 보냄
+};
+
+
+// 서버에서 유찰 처리 시 전체 클라이언트에 알림 및 실패 플레이어 리스트 업데이트
+socket.on('updateFailedPlayers', (failedList) => {
+  console.log('updateFailedPlayers 수신:', failedList);
+  failedPlayers = failedList;
+  renderLeft();
+});
