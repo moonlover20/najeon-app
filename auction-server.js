@@ -206,7 +206,7 @@ socket.on('bid', ({ team, bid }) => {
   if (bid > auctionState.currentBid && bid <= teamPoints[team]) {
     auctionState.currentBid = bid;
     auctionState.currentTeam = team;
-    auctionState.history.push({ team, bid });
+    auctionState.history.push({ team, player: auctionState.currentPlayer, bid });  // ← player 정보도 함께
 
     // 타이머를 초기화만 함(20초로)
     auctionState.timer = 20;
