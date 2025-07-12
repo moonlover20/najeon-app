@@ -87,7 +87,13 @@ socket.on('updateRoster', (roster) => {
   renderRosterTable();
 });
 // 클라이언트 쪽 pickedPlayers 배열은 서버와 동기화용, 초기값 빈 배열
-
+function playBbyong() {
+  const audio = document.getElementById('bbyong-sound');
+  if (audio) {
+    audio.currentTime = 0; // 소리 처음부터
+    audio.play();
+  }
+}
 function renderRosterTable() {
   const tbl = document.getElementById('rosterTable');
   if (!tbl) return;
@@ -140,6 +146,7 @@ socket.on('newBid', ({team, bid, history}) => {
   auctionState.history = history;
   renderCenter();
   renderHistory();
+playBbyong();
 });
 
 socket.on('auctionEnded', (state) => {
@@ -359,6 +366,8 @@ document.addEventListener('DOMContentLoaded', () => {
       updateConfirmButton();
     });
   }
+
+
 socket.on('auctionEnded', (state) => {
   auctionState = state;
   renderCenter();
