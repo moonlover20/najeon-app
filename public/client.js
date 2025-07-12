@@ -1,13 +1,21 @@
-const allowedTeams = ['각반', '대림', '장수풍뎅이', '러부엉', '양갱', '블페러', '관전자','admin'];
-
+const allowedTeams = ['각반', '대림', '장수풍뎅이', '러부엉', '양갱', '블페러', '관전자',];
+const teamPasswords = {
+  '각반': '1112',
+  '대림': '2223',
+  '장수풍뎅이': '3334',
+  '러부엉': '4445',
+  '양갱': '5556',
+  '블페러': '6667',
+  '관전자': '7778',
+};
 
 function getTeamFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const t = params.get('team');
-  return t ? t : '관전자';
+  return t ? t : null;
 }
-const myTeam = getTeamFromUrl();
 
+const myTeam = getTeamFromUrl();
 
 if (!allowedTeams.includes(myTeam)) {
   document.body.innerHTML = `
@@ -17,7 +25,19 @@ if (!allowedTeams.includes(myTeam)) {
     </div>
   `;
   throw new Error("Invalid team name");
+} else {
+  // 모든 팀에 대해 비번 입력받음 (관전자, admin도)
+  const userPw = prompt(`${myTeam} 비밀번호를 입력하세요`);
+  if (userPw !== teamPasswords[myTeam]) {
+    // 차단 메시지 (body 최상단에 blocker div를 넣어둔 경우)
+    document.getElementById('blocker').innerHTML =
+      `<div style="color:red;font-size:2rem;">❌ 비밀번호 미입력으로 기능이 작동하지 않습니다.
+                                                            새로 고침을 통해 비밀번호를 입력해주세요. </div>`;
+    throw new Error("비밀번호 오류");
+  }
 }
+
+
 
 // 권한별 버튼 표시
 window.onload = function() {
@@ -244,7 +264,7 @@ function renderHistory() {
     tbody.innerHTML = history.slice().reverse().map(row =>
       `<tr>
         <td>${row.team}</td>
-        <td>${row.player || (auctionState.isRunning ? auctionState.currentPlayer : '-')}</td>
+        <td>${row.player || '-'}</td>
         <td>${row.bid}</td>
       </tr>`
     ).join('');
@@ -272,16 +292,22 @@ window.startAuction = () => {
 
 // 입찰
 window.bid = () => {
-  const team = myTeam; // 직접 입력받지 않고, 파라미터로 고정!
+  const team = myTeam;
+  const bidBtn = document.getElementById('bidBtn');
   const bid = parseInt(document.getElementById('bidInput').value, 10);
   if (!auctionState.isRunning) {
     alert('경매가 시작되지 않았습니다.');
     return;
   }
   if (!team || isNaN(bid) || bid < 1) return;
-  socket.emit('bid', {team, bid});
+
+  bidBtn.disabled = true;
+  socket.emit('bid', { team, bid });
   document.getElementById('bidInput').value = '';
 };
+
+
+
 
 
 // 낙찰
@@ -305,7 +331,9 @@ socket.on('updatePlayers', ({ pickedPlayers: picked, failedPlayers: failed }) =>
 });
 socket.on('bidResult', ({ success, message }) => {
   showBidAlert(message, success);
+  document.getElementById('bidBtn').disabled = false; // 응답 올 때 확실하게 복구!
 });
+
 
 document.addEventListener('DOMContentLoaded', () => {
   // 경매확정 버튼 엘리먼트

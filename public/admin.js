@@ -1,3 +1,11 @@
+// admin.js 맨 위에 추가
+const adminPassword = '8889';
+const inputPw = prompt('관리자 비밀번호를 입력하세요');
+if (inputPw !== adminPassword) {
+  document.getElementById('blocker').innerHTML =
+    `<div style="color:red;font-size:2rem;">❌ 비밀번호가 틀렸습니다.</div>`;
+  throw new Error("비밀번호 오류");
+}
 const socket = io();
 
 let playerList = [];
