@@ -45,7 +45,10 @@ window.onload = function() {
     const normalPickBtn = document.getElementById('normalPickBtn');
     if (normalPickBtn) {
       normalPickBtn.onclick = function() {
+        if (isRouletteRunning) return;      // 3초 내 중복 방지
         socket.emit('normalPick');
+        isRouletteRunning = true;
+        normalPickBtn.disabled = true;       // 버튼도 잠금
       };
     }
   }
@@ -59,6 +62,7 @@ let teamNames = [];
 let teamPoints = {};
 let playerList = [];
 let auctionState = {};
+let isRouletteRunning = false;
 
 // 버튼 활성화 함수 (전역에서 참조)
 let updateConfirmButton = null;
@@ -237,7 +241,10 @@ function startRouletteAnimation(finalPlayerName) {
     clearInterval(rouletteInterval);
     rouletteDiv.textContent = finalPlayerName;
     renderLeft();
-  }, spinDuration);
+    isRouletteRunning = false; // 3초 뒤 롤렛 중복 방지 해제!
+    const normalPickBtn = document.getElementById('normalPickBtn');
+    if (normalPickBtn) normalPickBtn.disabled = false; // 버튼도 다시 활성화
+  }, spinDuration); // spinDuration = 3000(3초)
 }
 function playConfirm() {
   const audio = document.getElementById('confirm-sound');
@@ -309,11 +316,15 @@ window.bid = () => {
     return;
   }
   if (!team || isNaN(bid) || bid < 1) return;
-
+  if (bid % 5 !== 0) {
+    showBidAlert('입찰은 5포인트 단위로만 가능합니다.', false);
+    return;
+  }
   bidBtn.disabled = true;
   socket.emit('bid', { team, bid });
   document.getElementById('bidInput').value = '';
 };
+
 
 // 낙찰
 window.confirmAuction = () => {
