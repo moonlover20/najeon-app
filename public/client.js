@@ -17,6 +17,9 @@ function getTeamFromUrl() {
 
 const myTeam = getTeamFromUrl();
 
+if (!window.nickname) {
+  window.nickname = myTeam + '_' + Math.floor(Math.random() * 100);
+}
 if (!allowedTeams.includes(myTeam)) {
   document.body.innerHTML = `
     <div style="display:flex;justify-content:center;align-items:center;min-height:100vh;font-size:2rem;color:#f4511e;font-family:'GmarketSansBold',sans-serif;">
@@ -194,6 +197,63 @@ socket.on('updatePlayers', ({ pickedPlayers: picked, failedPlayers: failed }) =>
 socket.on('bidResult', ({ success, message }) => {
   showBidAlert(message, success);
   document.getElementById('bidBtn').disabled = false;
+});
+// 1. 채팅 메시지 받기
+socket.on('chatMessage', ({ team, name, message, timestamp }) => {
+  const chatMessages = document.getElementById('chatMessages');
+  if (!chatMessages) return;
+  const time = new Date(timestamp);
+  const hhmm = time.toTimeString().slice(0,5);
+
+  // 팀별 색상 부여(예시)
+  const teamColors = {
+    '각반': '#5e72e4', '대림': '#fd9644', '장수풍뎅이': '#20bf6b',
+    '러부엉': '#8854d0', '양갱': '#f7b731', '블페러': '#2d98da', '관전자':'#8395a7'
+  };
+  const color = teamColors[team] || '#888';
+
+  const msgHtml = `
+    <div style="
+      margin:6px 0;display:flex;align-items:center;gap:8px;
+      ">
+      <div style="min-width:34px;text-align:right;font-size:13px;color:${color};font-weight:900;">
+        ${team}
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:7px 14px 6px 14px;box-shadow:0 1px 5px #ebecef;font-size:15px;max-width:178px;word-break:break-all;">
+        <span style="font-weight:bold;color:#232323;">${name || ''}</span>
+        <span style="color:#bbb;font-size:12px;margin-left:4px;">${hhmm}</span><br>
+        <span style="color:#232323;">${message}</span>
+      </div>
+    </div>
+  `;
+  chatMessages.innerHTML += msgHtml;
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+
+
+// 2. 채팅 전송 함수
+function sendChat() {
+  const chatInput = document.getElementById('chatInput');
+  const message = chatInput.value.trim();
+  if (!message) return;
+  socket.emit('chatMessage', {
+    team: myTeam,
+    name: window.nickname || '', // 닉네임 변수(없으면 빈값)
+    message,
+  });
+  chatInput.value = '';
+}
+
+// 3. 채팅 전송 버튼/엔터키 이벤트 바인딩
+document.addEventListener('DOMContentLoaded', () => {
+  const chatSendBtn = document.getElementById('chatSendBtn');
+  if (chatSendBtn) chatSendBtn.onclick = sendChat;
+  const chatInput = document.getElementById('chatInput');
+  if (chatInput) {
+    chatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendChat();
+    });
+  }
 });
 
 // 렌더링 함수들

@@ -91,6 +91,15 @@ io.on('connection', (socket) => {
     auctionState.history = [];
     io.emit('updateHistory', auctionState.fullHistory);
   });
+  socket.on('chatMessage', ({ team, name, message }) => {
+    // 모든 클라이언트에 브로드캐스트 (팀명, 메시지, 타임스탬프 포함)
+    io.emit('chatMessage', {
+      team,
+      name,
+      message,
+      timestamp: Date.now(),
+    });
+  });
 socket.on('setTeamPoints', ({ team, point }) => {
   if (!teamNames.includes(team)) return;
   if (typeof point !== "number" || point < 0) return;
