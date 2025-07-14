@@ -169,7 +169,7 @@ socket.on('setTeamPoints', ({ team, point }) => {
     if (!pickedPlayers.includes(picked.name)) {
   pickedPlayers.push(picked.name);
 }
-
+  io.emit('updatePlayers', { pickedPlayers, failedPlayers });
 
     // 뽑힌 선수 이름 클라이언트에 전달
 io.emit('normalPickResult', {
