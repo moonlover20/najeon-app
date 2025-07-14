@@ -118,6 +118,7 @@ socket.on('normalPickResult', function(data) {
     if (normalPickBtn) normalPickBtn.disabled = false;
     return;
   }
+  auctionState.currentPlayer = data.name; 
   startRouletteAnimation(data.name, data.image);  // <- 이걸로 통일
 });
 

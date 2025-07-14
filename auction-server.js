@@ -20,7 +20,7 @@ const playerImageMap = {
 '바나나': 'https://i.imgur.com/VlvHwEm.png',
 '현진': 'https://i.imgur.com/C34RNMz.png',
 '박제인간': 'https://i.imgur.com/e0vpsmw.png',
-'키죠': 'https://i.imgur.com/97CZj3Y.png',
+'키죠': 'https://i.imgur.com/oU6CMxm.png',
 '러라': 'https://i.imgur.com/97CZj3Y.png',
 '까치': 'https://i.imgur.com/bp8R3xi.png',
 '재민': 'https://i.imgur.com/9MCbrib.png',
