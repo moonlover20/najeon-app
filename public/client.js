@@ -276,9 +276,10 @@ function startRouletteAnimation(finalPlayerName, finalImage) {
   const rouletteDiv = document.getElementById('rouletteDisplay');
   if (!rouletteDiv) return;
 
-  const candidates = playerList.filter(
-    p => !pickedPlayers.includes(p.name)
-  ).map(p => p.name);
+const candidates = playerList.filter(
+  p => !pickedPlayers.includes(p.name) && !failedPlayers.includes(p.name)
+).map(p => p.name);
+
 
   if (candidates.length === 0) {
     rouletteDiv.textContent = "더 이상 뽑을 선수가 없습니다.";
