@@ -39,7 +39,7 @@ if (!allowedTeams.includes(myTeam)) {
 }
 
 // 권한별 버튼 표시
-document.addEventListener('DOMContentLoaded', function() {
+window.onload = function() {
   if (myTeam !== '관전자') {
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
   }
@@ -278,7 +278,6 @@ function startRouletteAnimation(finalPlayerName, finalImage) {
   const rouletteDiv = document.getElementById('rouletteDisplay');
   if (!rouletteDiv) return;
 
-  // 아직 안뽑힌 후보만
   const candidates = playerList.filter(
     p => !pickedPlayers.includes(p.name)
   ).map(p => p.name);
@@ -291,6 +290,35 @@ function startRouletteAnimation(finalPlayerName, finalImage) {
     return;
   }
 
+  // 1명만 남았으면 바로 결과만 보여주고 리턴
+  if (candidates.length === 1) {
+    let html = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:22px;">
+        <img src="${finalImage}" alt="${finalPlayerName}" 
+          style="width:110px;height:110px;border-radius:50%;border:4px solid #ff7e36;background:#fff;">
+        <div style="display:flex;align-items:center;height:110px;">
+          <span style="
+            font-size:2.3rem;
+            font-weight:900;
+            color:#ff6700;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            height:110px;
+            min-width:80px;
+            text-align:center;
+          ">${finalPlayerName}</span>
+        </div>
+      </div>
+    `;
+    rouletteDiv.innerHTML = html;
+    isRouletteRunning = false;
+    const normalPickBtn = document.getElementById('normalPickBtn');
+    if (normalPickBtn) normalPickBtn.disabled = false;
+    return;
+  }
+
+  // 2명 이상일 때만 룰렛 돌리기
   let index = 0;
   const spinDuration = 3000;
   const intervalTime = 100;
@@ -304,33 +332,33 @@ function startRouletteAnimation(finalPlayerName, finalImage) {
   setTimeout(() => {
     clearInterval(rouletteInterval);
 
-let html = `
-  <div style="display:flex;align-items:center;justify-content:center;gap:22px;">
-    <img src="${finalImage}" alt="${finalPlayerName}" 
-      style="width:110px;height:110px;border-radius:50%;border:4px solid #ff7e36;background:#fff;">
-    <div style="display:flex;align-items:center;height:110px;">
-      <span style="
-        font-size:2.3rem;
-        font-weight:900;
-        color:#ff6700;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        height:110px;
-        min-width:80px;
-        text-align:center;
-      ">${finalPlayerName}</span>
-    </div>
-  </div>
-`;
-rouletteDiv.innerHTML = html;
+    let html = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:22px;">
+        <img src="${finalImage}" alt="${finalPlayerName}" 
+          style="width:110px;height:110px;border-radius:50%;border:4px solid #ff7e36;background:#fff;">
+        <div style="display:flex;align-items:center;height:110px;">
+          <span style="
+            font-size:2.3rem;
+            font-weight:900;
+            color:#ff6700;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            height:110px;
+            min-width:80px;
+            text-align:center;
+          ">${finalPlayerName}</span>
+        </div>
+      </div>
+    `;
+    rouletteDiv.innerHTML = html;
 
-
-  isRouletteRunning = false;
-  const normalPickBtn = document.getElementById('normalPickBtn');
-  if (normalPickBtn) normalPickBtn.disabled = false;
-}, spinDuration);
+    isRouletteRunning = false;
+    const normalPickBtn = document.getElementById('normalPickBtn');
+    if (normalPickBtn) normalPickBtn.disabled = false;
+  }, spinDuration);
 }
+
 
 function playConfirm() {
   const audio = document.getElementById('confirm-sound');
