@@ -109,20 +109,19 @@ function renderRosterTable() {
     </tr>`;
   }).join('');
 }
-
-socket.on('normalPickResult', ({ name, message }) => {
-  if (message) {
-    alert(message);
+socket.on('normalPickResult', function(data) {
+  // data: { name, image }
+  if (!data.name) {
+    document.getElementById('rouletteDisplay').innerHTML = '<span style="color:red">더 이상 뽑을 선수가 없습니다.</span>';
+    isRouletteRunning = false;
+    const normalPickBtn = document.getElementById('normalPickBtn');
+    if (normalPickBtn) normalPickBtn.disabled = false;
     return;
   }
-  if (!name) return;
-  console.log('Picked player:', name);
-  pickedPlayers.push(name);
-  auctionState.currentPlayer = name;
-  startRouletteAnimation(name);
-  renderLeft();
-  renderCenter();
+  startRouletteAnimation(data.name, data.image);  // <- 이걸로 통일
 });
+
+
 
 // 새 유저 동기화
 socket.emit('getState');
@@ -274,16 +273,20 @@ function renderLeft() {
 }
 let rouletteInterval = null;
 
-function startRouletteAnimation(finalPlayerName) {
+function startRouletteAnimation(finalPlayerName, finalImage) {
   const rouletteDiv = document.getElementById('rouletteDisplay');
-  if (!rouletteDiv) {
-    alert(`룰렛 애니메이션: ${finalPlayerName} 뽑힘!`);
-    return;
-  }
+  if (!rouletteDiv) return;
 
-  const candidates = playerList.filter(p => !pickedPlayers.includes(p.name)).map(p => p.name);
+  // 아직 안뽑힌 후보만
+  const candidates = playerList.filter(
+    p => !pickedPlayers.includes(p.name)
+  ).map(p => p.name);
+
   if (candidates.length === 0) {
     rouletteDiv.textContent = "더 이상 뽑을 선수가 없습니다.";
+    isRouletteRunning = false;
+    const normalPickBtn = document.getElementById('normalPickBtn');
+    if (normalPickBtn) normalPickBtn.disabled = false;
     return;
   }
 
@@ -299,13 +302,35 @@ function startRouletteAnimation(finalPlayerName) {
 
   setTimeout(() => {
     clearInterval(rouletteInterval);
-    rouletteDiv.textContent = finalPlayerName;
-    renderLeft();
-    isRouletteRunning = false; // 3초 뒤 롤렛 중복 방지 해제!
-    const normalPickBtn = document.getElementById('normalPickBtn');
-    if (normalPickBtn) normalPickBtn.disabled = false; // 버튼도 다시 활성화
-  }, spinDuration); // spinDuration = 3000(3초)
+
+let html = `
+  <div style="display:flex;align-items:center;justify-content:center;gap:22px;">
+    <img src="${finalImage}" alt="${finalPlayerName}" 
+      style="width:110px;height:110px;border-radius:50%;border:4px solid #ff7e36;background:#fff;">
+    <div style="display:flex;align-items:center;height:110px;">
+      <span style="
+        font-size:2.3rem;
+        font-weight:900;
+        color:#ff6700;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        height:110px;
+        min-width:80px;
+        text-align:center;
+      ">${finalPlayerName}</span>
+    </div>
+  </div>
+`;
+rouletteDiv.innerHTML = html;
+
+
+  isRouletteRunning = false;
+  const normalPickBtn = document.getElementById('normalPickBtn');
+  if (normalPickBtn) normalPickBtn.disabled = false;
+}, spinDuration);
 }
+
 function playConfirm() {
   const audio = document.getElementById('confirm-sound');
   if (audio) {

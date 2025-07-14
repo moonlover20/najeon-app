@@ -6,7 +6,38 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-
+const playerImageMap = {
+'봉식': 'https://i.imgur.com/jAOM4DY.png',
+ '광천김': 'https://i.imgur.com/WtwHTSl.png',
+'도민': 'https://i.imgur.com/j2Xh5Y4.png',
+ '나무': 'https://i.imgur.com/UxqRCty.png',
+'훈상태': 'https://i.imgur.com/LtkorXo.png',
+'미주': 'https://i.imgur.com/25NaMwd.png',
+'승우': 'https://i.imgur.com/4C3FJR9.png',
+'대파': 'https://i.imgur.com/XVm03so.png',
+'타포': 'https://i.imgur.com/F0pD7Eu.png',
+'노잭': 'https://i.imgur.com/v1AB76A.png',
+'바나나': 'https://i.imgur.com/VlvHwEm.png',
+'현진': 'https://i.imgur.com/C34RNMz.png',
+'박제인간': 'https://i.imgur.com/e0vpsmw.png',
+'키죠': 'https://i.imgur.com/97CZj3Y.png',
+'러라': 'https://i.imgur.com/bp8R3xi.png',
+'까치': 'https://i.imgur.com/cmuMfUm.png',
+'재민': 'https://i.imgur.com/9MCbrib.png',
+'케케로': 'https://i.imgur.com/2jPJ5iK.png',
+'블페러': 'https://i.imgur.com/2uIczlY.png',
+'양갱': 'https://i.imgur.com/sOpLidA.png',
+'강조이': 'https://i.imgur.com/jGz4gfX.png',
+'르블이': 'https://i.imgur.com/IeUn4BK.png',
+'말대모': 'https://i.imgur.com/fYlj1vU.png',
+'장수풍뎅이': 'https://i.imgur.com/pOQBcBM.png',
+'케터': 'https://i.imgur.com/qFWJkmr.png',
+'러부엉': 'https://i.imgur.com/L3z4Xm4.png',
+'대림': 'https://i.imgur.com/EDgw7qa.png',
+'각반': 'https://i.imgur.com/zdK62dW.png',
+'라포': 'https://i.imgur.com/V6D2A5F.png',
+'견습생': 'https://i.imgur.com/EV5W8Aj.png',
+};
 // 더미 데이터: 실제로는 DB나 시트에서 불러오면 됨
 const teamNames = ['각반', '대림', '장수풍뎅이', '러부엉', '양갱', '블페러'];
 let auctionInterval = null;
@@ -71,6 +102,7 @@ io.on('connection', (socket) => {
     auctionState,
     pickedPlayers,
     failedPlayers,
+ playerImageMap, 
   });
   socket.on('setPlayerStatus', ({ name, status }) => {
     // 1. 이름이 있으면 picked, failed 모두에서 제거
@@ -115,6 +147,7 @@ socket.on('setTeamPoints', ({ team, point }) => {
       auctionState,
       pickedPlayers,
       failedPlayers,
+ playerImageMap,
     });
   });
 
@@ -139,8 +172,11 @@ socket.on('setTeamPoints', ({ team, point }) => {
 
 
     // 뽑힌 선수 이름 클라이언트에 전달
-    io.emit('normalPickResult', { name: picked.name });
-  });
+io.emit('normalPickResult', {
+  name: picked.name,
+  image: playerImageMap[picked.name] || null,
+});
+});
 
   // 경매 시작 (관리자만)
 // startAuction 이벤트
