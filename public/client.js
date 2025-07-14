@@ -364,6 +364,7 @@ function startRouletteAnimation(finalPlayerName, finalImage) {
   }, 5000);
 
 }, spinDuration);
+}
 
 
 function playConfirm() {
