@@ -166,10 +166,6 @@ socket.on('setTeamPoints', ({ team, point }) => {
 
     // 랜덤으로 한 명 뽑기
     const picked = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
-    if (!pickedPlayers.includes(picked.name)) {
-  pickedPlayers.push(picked.name);
-}
-  io.emit('updatePlayers', { pickedPlayers, failedPlayers });
 
     // 뽑힌 선수 이름 클라이언트에 전달
 io.emit('normalPickResult', {
