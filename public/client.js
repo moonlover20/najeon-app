@@ -213,18 +213,16 @@ socket.on('chatMessage', ({ team, name, message, timestamp }) => {
   const color = teamColors[team] || '#888';
 
   const msgHtml = `
-    <div style="
-      margin:6px 0;display:flex;align-items:center;gap:8px;
-      ">
-      <div style="min-width:34px;text-align:right;font-size:13px;color:${color};font-weight:900;">
-        ${team}
-      </div>
-      <div style="background:#fff;border-radius:8px;padding:7px 14px 6px 14px;box-shadow:0 1px 5px #ebecef;font-size:15px;max-width:178px;word-break:break-all;">
-        <span style="font-weight:bold;color:#232323;">${name || ''}</span>
-        <span style="color:#bbb;font-size:12px;margin-left:4px;">${hhmm}</span><br>
-        <span style="color:#232323;">${message}</span>
-      </div>
-    </div>
+<div style="
+  margin:6px 0;display:flex;align-items:center;gap:8px;
+  ">
+  <div style="background:#fff;border-radius:8px;padding:7px 14px 6px 14px;box-shadow:0 1px 5px #ebecef;font-size:15px;max-width:178px;word-break:break-all;">
+    <span style="font-weight:bold;color:#232323;">${name || ''}</span>
+    <span style="color:#bbb;font-size:12px;margin-left:4px;">${hhmm}</span><br>
+    <span style="color:#232323;">${message}</span>
+  </div>
+</div>
+
   `;
   chatMessages.innerHTML += msgHtml;
   chatMessages.scrollTop = chatMessages.scrollHeight;
