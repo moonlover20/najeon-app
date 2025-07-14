@@ -310,11 +310,16 @@ function startRouletteAnimation(finalPlayerName, finalImage) {
       </div>
     `;
     rouletteDiv.innerHTML = html;
+
+  setTimeout(() => {
+    socket.emit('setPlayerStatus', { name: finalPlayerName, status: 'picked' });
     isRouletteRunning = false;
     const normalPickBtn = document.getElementById('normalPickBtn');
     if (normalPickBtn) normalPickBtn.disabled = false;
-    return;
-  }
+  }, 5000);
+
+  return;
+}
 
   // 2명 이상일 때만 룰렛 돌리기
   let index = 0;
@@ -351,11 +356,14 @@ function startRouletteAnimation(finalPlayerName, finalImage) {
     `;
     rouletteDiv.innerHTML = html;
 
+  setTimeout(() => {
+    socket.emit('setPlayerStatus', { name: finalPlayerName, status: 'picked' });
     isRouletteRunning = false;
     const normalPickBtn = document.getElementById('normalPickBtn');
     if (normalPickBtn) normalPickBtn.disabled = false;
-  }, spinDuration);
-}
+  }, 5000);
+
+}, spinDuration);
 
 
 function playConfirm() {
@@ -405,6 +413,7 @@ function renderHistory() {
     tbody.innerHTML = '<tr><td colspan="3">-</td></tr>';
   }
 }
+
 
 // 경매 시작
 window.startAuction = () => {
