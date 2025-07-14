@@ -39,7 +39,7 @@ if (!allowedTeams.includes(myTeam)) {
 }
 
 // 권한별 버튼 표시
-window.onload = function() {
+document.addEventListener('DOMContentLoaded', function() {
   if (myTeam !== '관전자') {
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
   }
