@@ -424,6 +424,16 @@ window.startAuction = () => {
     alert('경매를 시작할 선수를 먼저 뽑아주세요.');
     return;
   }
+  // === [여기 추가!] ===
+  // 모든 팀의 roster에서 이미 낙찰된 이름이 있으면 경고
+  const alreadyAssigned = Object.values(teamRoster).some(rosterArr =>
+    rosterArr.includes(auctionState.currentPlayer)
+  );
+  if (alreadyAssigned) {
+    alert('이미 낙찰된(배정된) 플레이어입니다!');
+    return;
+  }
+  // ====================
   if (confirm('경매를 시작하겠습니까?')) {
     socket.emit('startAuction', auctionState.currentPlayer);
   }
