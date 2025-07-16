@@ -7,36 +7,36 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 // 더미 데이터: 실제로는 DB나 시트에서 불러오면 됨
-const teamNames = ['엄소지', '견습생', '자잘자', '러부엉', ];
+const teamNames = ['미주', '훈상태', '광천김', '블랙오즈', ];
 let auctionInterval = null;
-let teamPoints = { 엄소지: 1000, 견습생: 1000, 자잘자: 1000, 러부엉: 1000 };
+let teamPoints = { 미주: 1000, 훈상태: 1000, 광천김: 1000, 블랙오즈: 1000 };
 let pickedPlayers = [];
 let failedPlayers = [];
 let playerList = [
-  { name: '김대파' },
-  { name: '봉식' },
-  { name: '바나나' },
-  { name: '미주' },
-  { name: '도민' },
-  { name: '하루마룬' },
-  { name: '박제' },
-  { name: '타포' },
-  { name: '광천김' },
-  { name: '현진' },
-  { name: '양갱' },
-  { name: '성당' },
+  { name: '각반' },
+  { name: '오픈더' },
+  { name: '자잘자' },
+  { name: '강조이' },
+  { name: '초심' },
+  { name: '윈드프레이' },
   { name: '재민' },
+  { name: '러라' },
+  { name: '노잭' },
+  { name: '승우' },
+  { name: '봉식' },
+  { name: '대파' },
   { name: '키죠' },
-  { name: '번검' },
-  { name: '케케로' },
+  { name: '타포' },
+  { name: '박제인간' },
+  { name: '바나나' },
 
 
 ];
 let teamRoster = {
-  엄소지: [],
-  견습생: [],
-  자잘자: [],
-  러부엉: [],
+  미주: [],
+  훈상태: [],
+  광천김: [],
+  블랙오즈: [],
 
 };
 
