@@ -39,44 +39,37 @@ const playerImageMap = {
 '견습생': 'https://i.imgur.com/EV5W8Aj.png',
 };
 // 더미 데이터: 실제로는 DB나 시트에서 불러오면 됨
-const teamNames = ['각반', '대림', '장수풍뎅이', '러부엉', '양갱', '블페러'];
+const teamNames = ['엄소지', '견습생', '자잘자', '러부엉', ];
 let auctionInterval = null;
-let teamPoints = { 각반: 800, 대림: 850, 장수풍뎅이: 900, 러부엉: 900, 양갱: 930, 블페러: 1000 };
+let teamPoints = { 엄소지: 1000, 견습생: 1000, 자잘자: 1000, 러부엉: 1000 };
 let pickedPlayers = [];
 let failedPlayers = [];
 let playerList = [
-  { name: '견습생', tier: 'M', pos: '정글' },
-  { name: '케터', tier: 'M', pos: '미드' },
-  { name: '말대모', tier: 'M', pos: '미드' },
-  { name: '르블이', tier: 'M', pos: '미드' },
-  { name: '라포', tier: 'M', pos: '탑' },
-  { name: '케케로', tier: 'D', pos: '탑' },
-  { name: '강조이', tier: 'D', pos: '미드' },
-  { name: '재민', tier: 'D', pos: '탑' },
-  { name: '까치', tier: 'E', pos: '정글' },
-  { name: '러라', tier: 'E', pos: '서폿' },
-  { name: '박제인간', tier: 'E', pos: '정글' },
-  { name: '키죠', tier: 'E', pos: '원딜' },
-  { name: '현진', tier: 'E', pos: '탑' },
-  { name: '바나나', tier: 'P', pos: '탑' },
-  { name: '노잭', tier: 'P', pos: '서폿' },
-  { name: '봉식', tier: 'P', pos: '서폿' },
-  { name: '타포', tier: 'P', pos: '원딜' },
-  { name: '대파', tier: 'P', pos: '원딜' },
-  { name: '승우', tier: 'P', pos: '원딜' },
-  { name: '미주', tier: 'S', pos: '서폿' },
-  { name: '훈상태', tier: 'S', pos: '탑' },
-  { name: '나무', tier: 'S', pos: '미드' },
-  { name: '광천김', tier: 'B', pos: '탑' },
-  { name: '도민', tier: 'I', pos: '서폿' },
+  { name: '김대파' },
+  { name: '봉식' },
+  { name: '바나나' },
+  { name: '미주' },
+  { name: '도민' },
+  { name: '하루마룬' },
+  { name: '박제' },
+  { name: '타포' },
+  { name: '광천김' },
+  { name: '현진' },
+  { name: '양갱' },
+  { name: '성당' },
+  { name: '재민' },
+  { name: '키죠' },
+  { name: '번검' },
+  { name: '케케로' },
+
+
 ];
 let teamRoster = {
-  각반: [],
-  대림: [],
-  장수풍뎅이: [],
+  엄소지: [],
+  견습생: [],
+  자잘자: [],
   러부엉: [],
-  양갱: [],
-  블페러: [],
+
 };
 
 let auctionState = {
