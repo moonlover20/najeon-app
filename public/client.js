@@ -117,7 +117,7 @@ socket.on('normalPickResult', function(data) {
     return;
   }
   auctionState.currentPlayer = data.name; 
-  startRouletteAnimation(data.name, data.image);  // <- 이걸로 통일
+  startRouletteAnimation(data.name);  // <- 이걸로 통일
 });
 
 
@@ -265,7 +265,8 @@ function renderLeft() {
     let classes = 'player-list-item';
     if (pickedPlayers.includes(p.name)) classes += ' picked-player';
     else if (failedPlayers.includes(p.name)) classes += ' failed-player';
-    return `<div class="${classes}">${p.name} / ${p.tier} / ${p.pos}</div>`;
+return `<div class="${classes}">${p.name}</div>`;
+
   }).join('');
 }
 let rouletteInterval = null;
@@ -289,26 +290,17 @@ const candidates = playerList.filter(
 
   // 1명만 남았으면 바로 결과만 보여주고 리턴
   if (candidates.length === 1) {
-    let html = `
-      <div style="display:flex;align-items:center;justify-content:center;gap:22px;">
-        <img src="${finalImage}" alt="${finalPlayerName}" 
-          style="width:110px;height:110px;border-radius:50%;border:4px solid #ff7e36;background:#fff;">
-        <div style="display:flex;align-items:center;height:110px;">
-          <span style="
-            font-size:2.3rem;
-            font-weight:900;
-            color:#ff6700;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            height:110px;
-            min-width:80px;
-            text-align:center;
-          ">${finalPlayerName}</span>
-        </div>
-      </div>
-    `;
-    rouletteDiv.innerHTML = html;
+let html = `
+  <div style="display:flex;align-items:center;justify-content:center;gap:22px;">
+    <img src="${finalImage}" alt="${finalPlayerName}" 
+      style="width:110px;height:110px;border-radius:50%;border:4px solid #ff7e36;background:#fff;">
+    <div style="display:flex;align-items:center;height:110px;">
+      <span style="font-size:2.3rem;font-weight:900;color:#ff6700;...">${finalPlayerName}</span>
+    </div>
+  </div>
+`;
+rouletteDiv.innerHTML = html;
+
 
   setTimeout(() => {
     socket.emit('setPlayerStatus', { name: finalPlayerName, status: 'picked' });
@@ -331,29 +323,26 @@ const candidates = playerList.filter(
     rouletteDiv.textContent = candidates[index];
   }, intervalTime);
 
-  setTimeout(() => {
-    clearInterval(rouletteInterval);
-
-    let html = `
-      <div style="display:flex;align-items:center;justify-content:center;gap:22px;">
-        <img src="${finalImage}" alt="${finalPlayerName}" 
-          style="width:110px;height:110px;border-radius:50%;border:4px solid #ff7e36;background:#fff;">
-        <div style="display:flex;align-items:center;height:110px;">
-          <span style="
-            font-size:2.3rem;
-            font-weight:900;
-            color:#ff6700;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            height:110px;
-            min-width:80px;
-            text-align:center;
-          ">${finalPlayerName}</span>
-        </div>
+setTimeout(() => {
+  clearInterval(rouletteInterval);
+  let html = `
+    <div style="display:flex;align-items:center;justify-content:center;gap:22px;">
+      <div style="display:flex;align-items:center;height:110px;">
+        <span style="
+          font-size:2.3rem;
+          font-weight:900;
+          color:#ff6700;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          height:110px;
+          min-width:80px;
+          text-align:center;
+        ">${finalPlayerName}</span>
       </div>
-    `;
-    rouletteDiv.innerHTML = html;
+    </div>
+  `;
+  rouletteDiv.innerHTML = html;
 
   setTimeout(() => {
     socket.emit('setPlayerStatus', { name: finalPlayerName, status: 'picked' });
