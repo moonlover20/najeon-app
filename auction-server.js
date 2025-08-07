@@ -7,9 +7,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 // 더미 데이터: 실제로는 DB나 시트에서 불러오면 됨
-const teamNames = ['미주', '훈상태', '광천김', '블랙오즈', ];
+const teamNames = ['각반', '러부엉', '블페러', '양갱', ];
 let auctionInterval = null;
-let teamPoints = { 미주: 1000, 훈상태: 1000, 광천김: 1000, 블랙오즈: 1000 };
+let teamPoints = { 각반: 1000, 러부엉: 1000, 블페러: 1000, 양갱: 1000 };
 let pickedPlayers = [];
 let failedPlayers = [];
 let playerList = [
@@ -33,10 +33,10 @@ let playerList = [
 
 ];
 let teamRoster = {
-  미주: [],
-  훈상태: [],
-  광천김: [],
-  블랙오즈: [],
+  각반: [],
+  블페러: [],
+  양갱: [],
+  러부엉: [],
 
 };
 
